@@ -5,7 +5,7 @@ class CAddzadacha extends CBitrixComponent
 {
     public $componentPage = "";
 
-    function Display()
+    function displayTemplate()
     {
 
         CModule::IncludeModule('iblock');
@@ -38,13 +38,13 @@ class CAddzadacha extends CBitrixComponent
         CIBlockElement::Delete($id);
 
     }
-    function AccessUser(){
+    function accessUser(){
         $arRoles=['ACTIVE'=>"", 'AVAILABLE_STATUS'=>[]];
 
         global $USER;
         $arGroups = $USER->GetUserGroupArray();
         $sGroupsSep=implode("|", $arGroups);
-        echo "<pre>"; print_r($arGroups); echo "</pre>";
+//        echo "<pre>"; print_r($arGroups); echo "</pre>";
 
       $arCodeGroup = CGroup::GetList($by = "c_sort", $order = "asc", array("ID" => $sGroupsSep));
 
@@ -53,7 +53,7 @@ class CAddzadacha extends CBitrixComponent
 
 
       }
-        echo "<pre>"; print_r($arTest); echo "</pre>";
+//        echo "<pre>"; print_r($arTest); echo "</pre>";
 
         if (in_array("KURATOR", $arTest) || in_array("ADMIN", $arTest)) {
             $arRoles['ACTIVE']="KURATOR";
@@ -67,7 +67,7 @@ class CAddzadacha extends CBitrixComponent
 
     }
 
-    function CreateElement()
+    function createElement()
     {
         $el = new CIBlockElement;
         $PROP = array();
@@ -83,10 +83,10 @@ class CAddzadacha extends CBitrixComponent
 
         );
         $el->Add($arLoadProductArray);
-        $this->notification();
+        $this->notificationEmail();
     }
 
-    function EditingStatus($statusID, $elementId)
+    function editingStatus($statusID, $elementId)
     {
         CModule::IncludeModule('iblock');
 
@@ -96,11 +96,11 @@ class CAddzadacha extends CBitrixComponent
 
 
         CIBlockElement::SetPropertyValuesEx($elementId, false, array($PROPERTY_CODE => $PROPERTY_VALUE));
-        $this->notification();
+        $this->notificationEmail();
 
     }
 
-    function notification(){
+    function notificationEmail(){
 
         $PROP[1] = $_POST["NAME"];
         $PROP['OPISANIE'] = $_POST['OPISANIE'];
@@ -113,9 +113,16 @@ class CAddzadacha extends CBitrixComponent
             "SROK" => ($_POST["SROK"]),
             "STATUS" => ($_POST["STATUS"]),
         );
-        CEvent::Send('MAIL_NOTIFICATION',  's1', $arEventFields, 'N', '11',array());
-        CEvent::Send('MAIL_NOTIFICATION',  's1', $arEventFields, 'N', '12',array());
+        $this->mailerByAdd($arEventFields);
+        $this->mailerByModyfy($arEventFields);
 
+    }
+    function mailerByAdd($arEventFields){
+        CEvent::Send('MAIL_NOTIFICATION',  's1', $arEventFields, 'N', '11',array());
+    }
+
+    function mailerByModyfy($arEventFields){
+        CEvent::Send('MAIL_NOTIFICATION',  's1', $arEventFields, 'N', '12',array());
     }
 
     function Requests()
@@ -133,16 +140,19 @@ class CAddzadacha extends CBitrixComponent
             $this->componentPage = "template_status";
         }
         if (isset($_POST['STATUS'])&&$_POST['form_id']=='Add_status'){
-            $this->EditingStatus($_POST['STATUS'], $_POST['TASK']);
+            $this->editingStatus($_POST['STATUS'], $_POST['TASK']);
+        }
+        if ($_POST['form_id']=='Add_Item'){
+            $this->createElement();
         }
     }
 
     function executeComponent()
     {
-        $this->AccessUser();
-        $this->Display();
+        $this->accessUser();
+        $this->displayTemplate();
         $this->Requests();
-        $this->CreateElement();
+       // $this->createElement();
 //        $this->delete($name);
         $this->includeComponentTemplate($this->componentPage);
 
